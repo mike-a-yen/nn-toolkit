@@ -1,3 +1,5 @@
+from pathlib import Path
+import pickle
 from typing import List
 
 
@@ -12,6 +14,7 @@ class TokenStore:
     def __init__(self, tokens: List[str] = []) -> None:
         self.token_to_int = dict()
         self.int_to_token = list()
+        self.unique_tokens = set()
         self.add_tokens(_SPECIALS)
         self.add_tokens(tokens)
 
@@ -21,14 +24,18 @@ class TokenStore:
 
     def add_token(self, token: str) -> None:
         """Add a token to the vocab."""
-        if token in self.token_to_int:
+        if token in self.unique_tokens:
             return
         self.int_to_token.append(token)
         idx = self.int_to_token.index(token)
         self.token_to_int[token] = idx
-    
+        self.unique_tokens.add(token)
+
     def __getitem__(self, token: str) -> int:
         return self.token_to_int.get(token, self.unk_idx)
+
+    def __contains__(self, token: str) -> bool:
+        return token in self.unique_tokens
 
     @property
     def pad(self) -> str:
@@ -65,4 +72,8 @@ class TokenStore:
     @property
     def size(self):
         return len(self.int_to_token)
+    
+    def save(self, path: Path) -> None:
+        with open(path, 'wb') as fw:
+            pickle.dump(self, fw)
     

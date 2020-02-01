@@ -1,6 +1,8 @@
 from collections import Counter
 import operator
-from typing import List
+from pathlib import Path
+import pickle
+from typing import List, Union
 
 import pandas as pd
 
@@ -24,11 +26,23 @@ class Vocab:
             decoded = [self.token_store.int_to_token[i] for i in tokens]
         return decoded
     
+    def __contains__(self, token: str) -> bool:
+        return token in self.token_store
+    
     def __getitem__(self, token: str) -> int:
         return self.token_store[token]
 
     def __getattr__(self, k: str):
         return getattr(self.token_store, k)
+    
+    @classmethod
+    def from_file(cls, path: Path):
+        with open(path, 'rb') as fo:
+            token_store = pickle.load(fo)
+        return cls(token_store)
+    
+    def to_file(self, path: Path) -> None:
+        self.token_store.save(path)
 
 
 class VocabBuilder:
@@ -43,7 +57,7 @@ class VocabBuilder:
     
     def get_vocab_tokens(self) -> List[str]:
         tokens = []
-        for token, count in self.token_counter.items():
+        for token, count in sorted(self.token_counter.items(), key=lambda x: -x[1]):
             if self.passes_count_threshold(len(tokens), self.max_size, operator.ge):
                 break
             if self.passes_count_threshold(count, self.min_count, operator.ge):
@@ -51,9 +65,12 @@ class VocabBuilder:
                 tokens.append(token)
         return tokens
 
-    def from_df(self, df: pd.DataFrame, token_col: str) -> Vocab:
-        tokens = [token for sequence in df[token_col] for token in sequence]
-        self.update_counter(tokens)
+    def from_df(self, df: pd.DataFrame, token_cols: Union[List[str], str]) -> Vocab:
+        if isinstance(token_cols, str):
+            token_cols = [token_cols]
+        tokens = []
+        for col in token_cols:
+            _ = df[col].apply(self.update_counter)
         vocab_tokens = self.get_vocab_tokens()
         token_store = TokenStore(vocab_tokens)
         return Vocab(token_store)
