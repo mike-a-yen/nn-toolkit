@@ -53,7 +53,7 @@ class TweetCollector:
                 i += 1
                 time.sleep(0.05)
                 if len(self.DATA) % self.print_at == 0:
-                    tqdm.write(tweet)
+                    tqdm.write(str(tweet))
                 if len(self.DATA) >= self.flush_at:
                     self.save_df()
                     self.DATA = []

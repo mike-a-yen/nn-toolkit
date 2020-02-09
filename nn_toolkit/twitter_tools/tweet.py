@@ -10,7 +10,7 @@ class Tweet:
         self.truncated = data['truncated']
         self.user_id = data['user']['id']
         self.user_name = data['user']['name']
-        self.screen_nmae = data['user']['screen_name']
+        self.screen_name = data['user']['screen_name']
         place = data.get('place')
         if place is None:
             place = dict()
