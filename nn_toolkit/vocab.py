@@ -6,7 +6,7 @@ from typing import List, Union
 
 import pandas as pd
 
-from .token_store import TokenStore
+from .token_store import TokenStore, _SPECIALS
 
 
 class Vocab:
@@ -56,7 +56,7 @@ class VocabBuilder:
         self.token_counter.update(tokens)
     
     def get_vocab_tokens(self) -> List[str]:
-        tokens = []
+        tokens = [] + _SPECIALS
         for token, count in sorted(self.token_counter.items(), key=lambda x: -x[1]):
             if self.passes_count_threshold(len(tokens), self.max_size, operator.ge):
                 break
