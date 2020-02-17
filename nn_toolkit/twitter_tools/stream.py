@@ -17,16 +17,32 @@ def init_tweepy_stream(api: tweepy.API) -> tweepy.StreamListener:
 
 
 class StreamListener(tweepy.StreamListener):
+    delay = 1
+
     def __init__(self) -> None:
         super().__init__()
         self.latest_tweet: Tweet = None
 
     def on_data(self, raw_data: str) -> Tweet:
         data = json.loads(raw_data)
+        if self.check_data(data):
+            self.latest_tweet = Tweet(data)
+        return True
+
+    def on_status_(self, status) -> Tweet:
+        if self.check_data(status._json):
+            self.latest_tweet = Tweet(status._json)
+        return True
+
+    def check_data(self, data: dict) -> bool:
+        if data.get('limit') is not None:
+            # rate limiting
+            time.sleep(self.delay)
+            self.delay *= 2
+            return False
+        self.delay = 1
         if data.get('id') is None:  # not a tweet
-            time.sleep(1)
-            return True
-        self.latest_tweet = Tweet(data)
+            return False
         return True
 
 
